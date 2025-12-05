@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prototipo Cursos – Prototipo 1</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #f4f5f7;
+        color: #333;
+    }
+
+    header {
+        background: #1f2532;
+        color: white;
+        padding: 22px 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    header h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 600;
+    }
+
+    .search-box {
+        width: 320px;
+        position: relative;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: none;
+        outline: none;
+        font-size: 15px;
+    }
+
+    /* Layout */
+    .container {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 22px;
+        padding: 25px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        background: white;
+        padding: 20px;
+        border-radius: 14px;
+        box-shadow: 0 2px 6px #00000015;
+        height: fit-content;
+    }
+
+    .sidebar h3 {
+        margin-top: 0;
+        font-size: 18px;
+    }
+
+    .sidebar label {
+        display: block;
+        margin: 10px 0;
+        font-size: 14px;
+    }
+
+    /* Results */
+    .results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+    }
+
+    /* Card */
+    .card {
+        background: white;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 3px 8px #00000020;
+        transition: 0.25s;
+        cursor: pointer;
+    }
+
+    .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 14px #00000030;
+    }
+
+    /* Espacio de imagen (oscuro) */
+    .image-placeholder {
+        width: 100%;
+        height: 160px;
+        background: #2f3640; /* gris oscuro elegante */
+    }
+
+    .card-content {
+        padding: 16px;
+    }
+
+    .card-content h4 {
+        margin: 0 0 8px;
+        font-size: 18px;
+    }
+
+    .tags {
+        margin-top: 8px;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 5px 10px;
+        background: #e7e9ee;
+        border-radius: 10px;
+        font-size: 12px;
+        margin-right: 6px;
+        margin-top: 4px;
+    }
+
+    /* Modal */
+    .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        width: min(90%, 500px);
+        box-shadow: 0 4px 12px #00000040;
+        animation: pop 0.25s ease;
+    }
+
+    @keyframes pop {
+        from { transform: scale(0.85); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .close-btn {
+        float: right;
+        cursor: pointer;
+        font-size: 22px;
+        color: #444;
+    }
+
+    @media (max-width: 850px) {
+        .container {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>Catálogo de Cursos</h1>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Buscar cursos...">
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <h3>Filtros</h3>
+
+        <label><input type="checkbox" class="filter" value="Diseño"> Diseño</label>
+        <label><input type="checkbox" class="filter" value="Programación"> Programación</label>
+        <label><input type="checkbox" class="filter" value="Marketing"> Marketing</label>
+        <label><input type="checkbox" class="filter" value="Datos"> Datos</label>
+
+        <hr>
+
+        <h3>Duración</h3>
+        <label><input type="radio" name="duracion" value="Corto"> Cursos cortos</label>
+        <label><input type="radio" name="duracion" value="Medio"> Cursos medianos</label>
+        <label><input type="radio" name="duracion" value="Largo"> Cursos largos</label>
+    </aside>
+
+    <!-- Resultados -->
+    <section class="results" id="results"></section>
+
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="cerrarModal()">✕</span>
+        <h2 id="modalTitle"></h2>
+        <p id="modalCategory"></p>
+        <p id="modalDescription"></p>
+    </div>
+</div>
+
+<script>
+    const cursos = [
+        { titulo: "Introducción al Diseño UX", categoria: "Diseño", duracion: "Corto", descripcion: "Fundamentos de UX, prototipado y arquitectura de información."},
+        { titulo: "HTML, CSS y JavaScript", categoria: "Programación", duracion: "Medio", descripcion: "Construye páginas web desde cero con buenas prácticas."},
+        { titulo: "Análisis de Datos con Python", categoria: "Datos", duracion: "Largo", descripcion: "Pandas, NumPy, visualización de datos y estadísticas."},
+        { titulo: "Marketing Digital 360°", categoria: "Marketing", duracion: "Corto", descripcion: "SEO, SEM, redes sociales y campañas digitales."},
+        { titulo: "JavaScript Avanzado", categoria: "Programación", duracion: "Largo", descripcion: "APIs, asincronía, patrones, proyectos avanzados."}
+    ];
+
+    const results = document.getElementById("results");
+
+    function mostrarCursos(lista) {
+        results.innerHTML = "";
+        lista.forEach(curso => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+                <div class="image-placeholder"></div>
+                <div class="card-content">
+                    <h4>${curso.titulo}</h4>
+                    <div class="tags">
+                        <span class="tag">${curso.categoria}</span>
+                        <span class="tag">${curso.duracion}</span>
+                    </div>
+                </div>
+            `;
+            card.onclick = () => abrirModal(curso);
+            results.appendChild(card);
+        });
+    }
+
+    function filtrar() {
+        const texto = document.getElementById("searchInput").value.toLowerCase();
+        const checkFiltros = [...document.querySelectorAll(".filter:checked")].map(f => f.value);
+        const duracionSel = document.querySelector("input[name='duracion']:checked")?.value;
+
+        const filtrados = cursos.filter(curso => {
+            const coincideTexto = curso.titulo.toLowerCase().includes(texto);
+            const coincideCategoria = checkFiltros.length === 0 || checkFiltros.includes(curso.categoria);
+            const coincideDuracion = !duracionSel || curso.duracion === duracionSel;
+            return coincideTexto && coincideCategoria && coincideDuracion;
+        });
+
+        mostrarCursos(filtrados);
+    }
+
+    document.getElementById("searchInput").addEventListener("input", filtrar);
+    document.querySelectorAll(".filter").forEach(f => f.addEventListener("change", filtrar));
+    document.querySelectorAll("input[name='duracion']").forEach(r => r.addEventListener("change", filtrar));
+
+    mostrarCursos(cursos);
+
+    function abrirModal(curso) {
+        document.getElementById("modalTitle").textContent = curso.titulo;
+        document.getElementById("modalCategory").textContent = "Categoría: " + curso.categoria;
+        document.getElementById("modalDescription").textContent = curso.descripcion;
+        document.getElementById("modal").style.display = "flex";
+    }
+
+    function cerrarModal() {
+        document.getElementById("modal").style.display = "none";
+    }
+</script>
+
+</body>
+</html>
+
+
+
